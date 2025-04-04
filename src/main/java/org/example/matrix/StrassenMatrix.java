@@ -11,62 +11,101 @@ public class StrassenMatrix {
                 {2, 6, 3, 1}
         };
 
-        ConventionalMatrix conv = new ConventionalMatrix(M, true);  // logs automatically
-
+        // Compute inverse via ConventionalMatrix (with verbose logging)
+        ConventionalMatrix conv = new ConventionalMatrix(M, true);
         RealMatrix Nmat = conv.getInverse();
         double[][] N = Nmat.getData();
 
-        System.out.println("\n[Strassen's Algorithm Begins]");
-        long start = System.nanoTime();
-        double[][] MN = strassenMultiply(M, N);
-        double[][] NM = strassenMultiply(N, M);
-        long end = System.nanoTime();
+        System.out.println("\n[Strassen Recursive Algorithm Begins]");
 
+        // ✅ Time M × N
+        long startMN = System.nanoTime();
+        double[][] MN = strassenMultiply(M, N);
+        long endMN = System.nanoTime();
+
+        // ✅ Time N × M
+        long startNM = System.nanoTime();
+        double[][] NM = strassenMultiply(N, M);
+        long endNM = System.nanoTime();
+
+        // ✅ Output matrices
         System.out.println("\nStrassen M * N:");
         MatrixLogger.print(MN);
         System.out.println("\nStrassen N * M:");
         MatrixLogger.print(NM);
 
+        // ✅ Validation
         System.out.println("\n[Validation]");
         System.out.println("Strassen M * N ≈ I: " + ConventionalMatrix.isIdentityStatic(MN));
         System.out.println("Strassen N * M ≈ I: " + ConventionalMatrix.isIdentityStatic(NM));
 
+        // ✅ Time breakdown
+        long timeMN = endMN - startMN;
+        long timeNM = endNM - startNM;
+        long totalTime = endNM - startMN;
+
         System.out.println("\n[Performance]");
-        System.out.println("Total Time (Strassen Multiplication): " + (end - start) + " ns");
+        System.out.println("Strassen M × N: " + timeMN + " ns");
+        System.out.println("Strassen N × M: " + timeNM + " ns");
+        System.out.println("Total Time (StrassenMatrix): " + totalTime + " ns");
+
     }
 
+
+    // -----------------------------
+    // Recursive Strassen utilities
+    // -----------------------------
+
     public static double[][] strassenMultiply(double[][] A, double[][] B) {
+        int n = nextPowerOfTwo(Math.max(A.length, A[0].length));
+        double[][] APrep = padMatrix(A, n);
+        double[][] BPrep = padMatrix(B, n);
+        double[][] CPrep = strassenRecursive(APrep, BPrep);
+        return cropMatrix(CPrep, A.length, B[0].length);
+    }
+
+    public static double[][] strassenRecursive(double[][] A, double[][] B) {
+        int n = A.length;
+        if (n == 1) return new double[][]{{A[0][0] * B[0][0]}};
+
+        int mid = n / 2;
         double[][][] a = split(A), b = split(B);
-        double[][] M1 = multiply(add(a[0], a[3]), add(b[0], b[3]));
-        double[][] M2 = multiply(add(a[2], a[3]), b[0]);
-        double[][] M3 = multiply(a[0], subtract(b[1], b[3]));
-        double[][] M4 = multiply(a[3], subtract(b[2], b[0]));
-        double[][] M5 = multiply(add(a[0], a[1]), b[3]);
-        double[][] M6 = multiply(subtract(a[2], a[0]), add(b[0], b[1]));
-        double[][] M7 = multiply(subtract(a[1], a[3]), add(b[2], b[3]));
+
+        double[][] M1 = strassenRecursive(add(a[0], a[3]), add(b[0], b[3]));
+        double[][] M2 = strassenRecursive(add(a[2], a[3]), b[0]);
+        double[][] M3 = strassenRecursive(a[0], subtract(b[1], b[3]));
+        double[][] M4 = strassenRecursive(a[3], subtract(b[2], b[0]));
+        double[][] M5 = strassenRecursive(add(a[0], a[1]), b[3]);
+        double[][] M6 = strassenRecursive(subtract(a[2], a[0]), add(b[0], b[1]));
+        double[][] M7 = strassenRecursive(subtract(a[1], a[3]), add(b[2], b[3]));
+
         double[][] C11 = add(subtract(add(M1, M4), M5), M7);
         double[][] C12 = add(M3, M5);
         double[][] C21 = add(M2, M4);
         double[][] C22 = add(subtract(add(M1, M3), M2), M6);
+
         return combine(C11, C12, C21, C22);
     }
 
-    public static double[][] multiply(double[][] A, double[][] B) {
-        int n = A.length;
-        double[][] C = new double[n][n];
-        for (int i = 0; i < n; i++)
-            for (int j = 0; j < n; j++)
-                for (int k = 0; k < n; k++)
-                    C[i][j] += A[i][k] * B[k][j];
-        return C;
+    public static int nextPowerOfTwo(int n) {
+        int pow = 1;
+        while (pow < n) pow *= 2;
+        return pow;
     }
 
-    public static boolean isIdentity(double[][] A) {
-        for (int i = 0; i < A.length; i++)
-            for (int j = 0; j < A[0].length; j++)
-                if (Math.abs(A[i][j] - (i == j ? 1 : 0)) > 1e-6)
-                    return false;
-        return true;
+    public static double[][] padMatrix(double[][] mat, int size) {
+        int r = mat.length, c = mat[0].length;
+        double[][] padded = new double[size][size];
+        for (int i = 0; i < r; i++)
+            System.arraycopy(mat[i], 0, padded[i], 0, c);
+        return padded;
+    }
+
+    public static double[][] cropMatrix(double[][] mat, int r, int c) {
+        double[][] result = new double[r][c];
+        for (int i = 0; i < r; i++)
+            System.arraycopy(mat[i], 0, result[i], 0, c);
+        return result;
     }
 
     public static double[][][] split(double[][] M) {
