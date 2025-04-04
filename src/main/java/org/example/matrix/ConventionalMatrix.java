@@ -72,6 +72,11 @@ public class ConventionalMatrix {
         return A.subtract(identity).getNorm() < 1e-6;
     }
 
+    public RealMatrix getMatrix() {
+        return M;
+    }
+
+
     public RealMatrix getInverse() {
         return N;
     }

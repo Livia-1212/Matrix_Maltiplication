@@ -18,15 +18,15 @@ public class StrassenMatrix {
 
         System.out.println("\n[Strassen Recursive Algorithm Begins]");
 
-        // ✅ Time M × N
-        long startMN = System.nanoTime();
+        // ✅ Time Strassen M × N
+        long startStrassenMN = System.nanoTime();
         double[][] MN = strassenMultiply(M, N);
-        long endMN = System.nanoTime();
+        long endStrassenMN = System.nanoTime();
 
-        // ✅ Time N × M
-        long startNM = System.nanoTime();
+        // ✅ Time Strassen N × M
+        long startStrassenNM = System.nanoTime();
         double[][] NM = strassenMultiply(N, M);
-        long endNM = System.nanoTime();
+        long endStrassenNM = System.nanoTime();
 
         // ✅ Output matrices
         System.out.println("\nStrassen M * N:");
@@ -39,23 +39,34 @@ public class StrassenMatrix {
         System.out.println("Strassen M * N ≈ I: " + ConventionalMatrix.isIdentityStatic(MN));
         System.out.println("Strassen N * M ≈ I: " + ConventionalMatrix.isIdentityStatic(NM));
 
-        // ✅ Time breakdown
-        long timeMN = endMN - startMN;
-        long timeNM = endNM - startNM;
-        long totalTime = endNM - startMN;
+        // ✅ Total time for Strassen block
+        long totalStrassenTime = endStrassenNM - startStrassenMN;
 
         System.out.println("\n[Performance]");
-        System.out.println("Strassen M × N: " + timeMN + " ns");
-        System.out.println("Strassen N × M: " + timeNM + " ns");
-        System.out.println("Total Time (StrassenMatrix): " + totalTime + " ns");
+        System.out.println("Strassen M × N: " + (endStrassenMN - startStrassenMN) + " ns");
+        System.out.println("Strassen N × M: " + (endStrassenNM - startStrassenNM) + " ns");
+        System.out.println("Total Time (StrassenMatrix): " + totalStrassenTime + " ns");
 
+        // ✅ NEW: Time breakdown for Conventional Multiplication (without LU)
+        long startConvMN = System.nanoTime();
+        RealMatrix MN_conv = conv.getMatrix().multiply(conv.getInverse());
+        long endConvMN = System.nanoTime();
+
+        long startConvNM = System.nanoTime();
+        RealMatrix NM_conv = conv.getInverse().multiply(conv.getMatrix());
+        long endConvNM = System.nanoTime();
+
+        long timeConventionalMN = endConvMN - startConvMN;
+        long timeConventionalNM = endConvNM - startConvNM;
+
+        System.out.println("\n[Time Breakdown: Matrix Multiplication Only]");
+        System.out.println("Conventional M × N: " + timeConventionalMN + " ns");
+        System.out.println("Conventional N × M: " + timeConventionalNM + " ns");
+        System.out.println("Strassen     M × N: " + (endStrassenMN - startStrassenMN) + " ns");
+        System.out.println("Strassen     N × M: " + (endStrassenNM - startStrassenNM) + " ns");
     }
 
-
-    // -----------------------------
-    // Recursive Strassen utilities
-    // -----------------------------
-
+    // Recursive Strassen utilities (unchanged)
     public static double[][] strassenMultiply(double[][] A, double[][] B) {
         int n = nextPowerOfTwo(Math.max(A.length, A[0].length));
         double[][] APrep = padMatrix(A, n);
