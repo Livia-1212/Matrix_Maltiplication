@@ -62,10 +62,10 @@ mvn exec:java -Dexec.mainClass="org.example.matrix.ConventionalMatrix"
 mvn exec:java -Dexec.mainClass="org.example.matrix.StrassenMatrix"
 ```
 4. **View the results**: After running the above commands, 
-the program will generate a bar chart `matrix_multiplication_times.png` in the 
+the program will generate a bar chart `matrix_multiplication_comparison.png` in the 
 project root directory, comparing the execution times of Conventional and 
-Strassen's methods.
-![Matrix Multiplication Timing](matrix_multiplication_times.png)
+Strassen's methods (multiplication step only).
+![matrix_multiplication_comparison.png](matrix_multiplication_comparison.png)
 
 Run `chart_matrix_times.py` to generate this chart using Python.
 
